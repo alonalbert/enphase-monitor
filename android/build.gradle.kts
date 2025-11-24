@@ -67,6 +67,7 @@ dependencies {
   implementation(libs.androidx.core.splashscreen)
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.hilt.navigation.compose)
+  implementation(libs.androidx.lifecycle.process)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
@@ -78,7 +79,6 @@ dependencies {
   implementation(libs.timber)
   implementation(libs.vico.compose)
   implementation(libs.vico.compose.m3)
-
   // Ktor
   implementation(libs.ktor.client.android)
   implementation(libs.ktor.client.auth)

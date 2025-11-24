@@ -1,5 +1,6 @@
 package com.alonalbert.enphase.monitor.server
 
+import com.alonalbert.enphase.monitor.enphase.Credentials
 import com.alonalbert.enphase.monitor.enphase.Enphase
 import com.alonalbert.enphase.monitor.enphase.ReserveCalculator
 import org.slf4j.LoggerFactory
@@ -12,7 +13,8 @@ internal class ReserveManager(
   private val setting: SettingRepository,
 ) {
   private val logger = LoggerFactory.getLogger(Server::class.java)
-  private val enphase = Enphase(logger)
+  private val config = setting.getEnphaseConfig()
+  private val enphase = Enphase({ Credentials(config.email, config.password)}, logger)
   private var currentReserve = -1
 
   suspend fun updateReserve() {
@@ -20,8 +22,6 @@ internal class ReserveManager(
     if (!reserveConfig.enabled) {
       return
     }
-    val config = setting.getEnphaseConfig()
-    enphase.ensureLogin(config.email, config.password)
     val now = LocalTime.now(ZoneId.systemDefault())
     val batteryCapacity = enphase.getBatteryCapacity(config.mainSite)
     val reserve = ReserveCalculator.calculateReserve(

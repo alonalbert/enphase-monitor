@@ -13,6 +13,6 @@ class TrustingManager : X509TrustManager {
   override fun checkServerTrusted(chain: Array<out X509Certificate?>?, authType: String?) {
   }
 
-  override fun getAcceptedIssuers(): Array<out X509Certificate?>? = emptyArray()
+  override fun getAcceptedIssuers(): Array<out X509Certificate?> = emptyArray()
 
 }

@@ -10,6 +10,7 @@ import com.alonalbert.enphase.monitor.repository.Repository
 import com.alonalbert.enphase.monitor.ui.navigation.NavigationViewModel.LoginState.Loading
 import com.alonalbert.enphase.monitor.ui.navigation.NavigationViewModel.LoginState.LoggedIn
 import com.alonalbert.enphase.monitor.ui.navigation.NavigationViewModel.LoginState.LoggedOut
+import com.alonalbert.enphase.monitor.util.DatabaseCredentialsProvider
 import com.alonalbert.enphase.monitor.util.TimberLogger
 import com.alonalbert.enphase.monitor.util.stateIn
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,9 +23,10 @@ import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
-class NavigationViewModel @Inject constructor(
-  private val repository: Repository,
+class NavigationViewModel
+@Inject constructor(
   private val db: AppDatabase,
+  private val repository: Repository,
 ) : ViewModel() {
 
   val loginState: StateFlow<LoginState> = db.loginInfoDao().flow().distinctUntilChanged().map {
@@ -49,9 +51,9 @@ class NavigationViewModel @Inject constructor(
     viewModelScope.launch {
       val batteryDao = db.batteryDao()
       repository.updateReserveConfig(reserveConfig)
-      val settings = db.enphaseConfigDao().get() ?: return@launch
-      Enphase(TimberLogger()).use { enphase ->
-        enphase.ensureLogin(settings.email, settings.password)
+      val enphaseConfigDao = db.enphaseConfigDao()
+      val settings = enphaseConfigDao.get() ?: return@launch
+      Enphase(DatabaseCredentialsProvider(enphaseConfigDao), TimberLogger()).use { enphase ->
         val mainSiteId = settings.mainSiteId
         val batteryCapacity = enphase.getBatteryCapacity(mainSiteId)
         val reserve = ReserveCalculator.calculateReserve(

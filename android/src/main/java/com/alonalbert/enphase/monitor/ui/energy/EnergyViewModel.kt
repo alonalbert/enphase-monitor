@@ -73,8 +73,7 @@ class EnergyViewModel @Inject constructor(
     job = viewModelScope.launch {
       withRefreshingState {
         try {
-          val period = periodFlow.value
-          when (period) {
+          when (val period = periodFlow.value) {
             is DayPeriod -> repository.updateStats(period.day)
             is MonthPeriod -> repository.updateStats(period.month)
           }

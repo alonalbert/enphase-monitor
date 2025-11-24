@@ -18,6 +18,9 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
@@ -54,9 +57,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.internal.closeQuietly
 import okio.IOException
 import org.slf4j.Logger
-import java.io.Closeable
 import java.security.SecureRandom
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlin.math.abs
@@ -64,12 +67,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import com.google.gson.JsonObject as GsonObject
 
-private const val BASE_URL = "https://enlighten.enphaseenergy.com"
+private const val ENPHASE_DOMAIN = "enlighten.enphaseenergy.com"
+private const val BASE_URL = "https://$ENPHASE_DOMAIN"
 
 private const val LOGIN_URL = "$BASE_URL/login/login.json"
 private const val TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 private const val LIVE_STREAM_URL = "$BASE_URL/pv/aws_sigv4/livestream.json"
-private const val DAILY_ENERGY_URL = "$BASE_URL/pv/systems/%1\$s/daily_energy?start_date=%2\$d-%3$02d-%4$02d&end_date=%2\$d-%3$02d-%4$02d"
+private const val DAILY_ENERGY_URL = $$"$$BASE_URL/pv/systems/%1$s/daily_energy?start_date=%2$d-%3$02d-%4$02d&end_date=%2$d-%3$02d-%4$02d"
 private const val TODAY_URL = "$BASE_URL/pv/systems/%s/today"
 private const val BATTERY_CONFIG_URL = "$BASE_URL/pv/settings/%s/battery_status.json"
 private const val XSRF_TOKEN_URL = "$BASE_URL/service/pes_management/systems/2565630/inapp?type=RMA"
@@ -84,25 +88,11 @@ private val gson = GsonBuilder()
   .create()
 
 class Enphase(
+  private val credentialsProvider: CredentialsProvider,
   private val logger: Logger = DefaultLogger()
-) : Closeable {
+) : AutoCloseable {
+  private val bearerTokenStorage = AtomicReference<BearerTokens?>(null)
   private val client = createClient()
-  private var sessionId: String? = null
-
-  suspend fun ensureLogin(email: String, password: String) {
-    if (sessionId != null) {
-      return
-    }
-    val response = client.submitForm(
-      LOGIN_URL,
-      parameters {
-        append("user[email]", email)
-        append("user[password]", password.trim())
-      })
-    if (response.status.isSuccess()) {
-      sessionId = gson.getObject(response.bodyAsText())["session_id"].asString
-    }
-  }
 
   suspend fun getBatteryState(siteId: String): BatteryState {
     val response = client.get(TODAY_URL.format(siteId))
@@ -198,15 +188,16 @@ class Enphase(
   }
 
   override fun close() {
+    logger.info("Closing Enphase client")
     client.closeQuietly()
   }
 
   private suspend fun GatewayConfig.getToken(email: String): String {
     enableLiveStatus(serialNumber)
-    val sessionId = sessionId ?: throw IllegalStateException("Not logged in")
+    val token = bearerTokenStorage.get() ?: throw IllegalStateException("Not logged in")
     val response = client.post(TOKEN_URL) {
       contentType(Application.Json)
-      setBody(GetTokenRequest(sessionId, serialNumber, email))
+      setBody(GetTokenRequest(token.accessToken, serialNumber, email))
     }
     return response.bodyAsText()
   }
@@ -262,6 +253,7 @@ class Enphase(
   }
 
   private fun createClient(): HttpClient {
+    logger.info("Creating Enphase client")
     return HttpClient(OkHttp) {
       HttpResponseValidator {
         validateResponse {
@@ -289,6 +281,51 @@ class Enphase(
       install(HttpCookies) {
         storage = AcceptAllCookiesStorage()
       }
+
+      install(Auth) {
+        bearer {
+          // This block is called when Ktor needs tokens for a request.
+          loadTokens {
+            bearerTokenStorage.get()
+          }
+
+          // This block is called when a request fails with 401 Unauthorized.
+          refreshTokens {
+            logger.info("Session expired or invalid. Attempting to re-login.")
+            val (email, password) = credentialsProvider.getCredentials()
+            val response = client.submitForm(
+              url = LOGIN_URL,
+              formParameters = parameters {
+                append("user[email]", email)
+                append("user[password]", password)
+              }
+            ) {
+              // Tell the Auth plugin not to add auth headers to this specific request
+              markAsRefreshTokenRequest()
+            }
+
+            if (response.status.isSuccess()) {
+              val newSessionId = gson.getObject(response.bodyAsText())["session_id"].asString
+              logger.info("Successfully re-logged in. New session ID acquired.")
+              val newTokens = BearerTokens(accessToken = newSessionId, refreshToken = "")
+              bearerTokenStorage.set(newTokens)
+              newTokens
+            } else {
+              logger.error("Failed to re-login.")
+              // Clear tokens to prevent retrying with invalid credentials
+              bearerTokenStorage.set(null)
+              null
+            }
+          }
+
+          // Only send bearer token for requests to the main API
+          // This is important to prevent sending the token to the wrong domain.
+          sendWithoutRequest { request ->
+            request.url.host == ENPHASE_DOMAIN
+          }
+        }
+      }
+
       engine {
         config {
           val trustAllCertificates = arrayOf(TrustingManager())
@@ -308,10 +345,7 @@ private suspend fun HttpResponse.bodyAsPrettyJson() = gson.toJson(JsonParser.par
 private fun Gson.getObject(json: String) = fromJson(json, GsonObject::class.java)
 
 private fun GsonObject?.getDoubles(key: String): List<Double> {
-  val values = this?.getAsJsonArray(key)
-  if (values == null) {
-    return List(96) { 0.0 }
-  }
+  val values = this?.getAsJsonArray(key) ?: return List(96) { 0.0 }
   val result = values.map {
     when {
       it is JsonNull -> 0.0
@@ -327,10 +361,7 @@ private fun GsonObject?.getDoubles(key: String): List<Double> {
 }
 
 private fun GsonObject?.getSoc(): List<Int?> {
-  val values = this?.getAsJsonArray("soc")
-  if (values == null) {
-    return List(96) { 0 }
-  }
+  val values = this?.getAsJsonArray("soc") ?: return List(96) { 0 }
   val result = values.map {
     when (it is JsonNull) {
       true -> null

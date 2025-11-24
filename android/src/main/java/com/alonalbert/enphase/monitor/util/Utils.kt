@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +45,7 @@ val Dp.px get() = with(drawScope) { toPx() }
 @Composable
 @ReadOnlyComposable
 fun stringResourceOrDefault(@StringRes id: Int, default: String): String {
-  val resources = LocalContext.current.resources
+  val resources = LocalResources.current
   return try {
     resources.getString(id)
   } catch (_: Resources.NotFoundException) {
@@ -69,3 +69,4 @@ fun SpannableStringBuilder.appendEnergyValue(name: String, value: Double, color:
     append("$name:\t${value.kw}\n", ForegroundColorSpan(color.toInt()), SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 }
+

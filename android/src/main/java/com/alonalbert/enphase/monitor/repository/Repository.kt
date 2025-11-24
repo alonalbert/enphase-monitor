@@ -11,11 +11,15 @@ import com.alonalbert.enphase.monitor.db.DayWithValues
 import com.alonalbert.enphase.monitor.db.EnphaseConfig
 import com.alonalbert.enphase.monitor.db.LoginInfo
 import com.alonalbert.enphase.monitor.db.ReserveConfig
+import com.alonalbert.enphase.monitor.db.exportGateway
+import com.alonalbert.enphase.monitor.db.mainGateway
 import com.alonalbert.enphase.monitor.enphase.Enphase
 import com.alonalbert.enphase.monitor.enphase.model.BatteryState
+import com.alonalbert.enphase.monitor.enphase.model.LiveStatus
 import com.alonalbert.enphase.monitor.ui.datepicker.DayPeriod
 import com.alonalbert.enphase.monitor.ui.datepicker.MonthPeriod
 import com.alonalbert.enphase.monitor.ui.datepicker.Period
+import com.alonalbert.enphase.monitor.util.DatabaseCredentialsProvider
 import com.alonalbert.enphase.monitor.util.TimberLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
@@ -31,12 +35,14 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 class Repository @Inject constructor(
   val db: AppDatabase,
-) {
-  private val enphase: Enphase = Enphase(TimberLogger())
+) : AutoCloseable {
+  private val enphase: Enphase = Enphase(DatabaseCredentialsProvider(db.enphaseConfigDao()), TimberLogger())
 
   suspend fun updateEnphaseConfig(loginInfo: LoginInfo) {
     val client = Client(loginInfo.server, loginInfo.username, loginInfo.password)
@@ -87,7 +93,6 @@ class Repository @Inject constructor(
 
   suspend fun updateStats(day: LocalDate) {
     val config = db.enphaseConfigDao().get() ?: return
-    enphase.ensureLogin(config.email, config.password)
     updateMainStats(config, day)
     updateExportStats(config, day)
     updateBatteryState(config)
@@ -98,7 +103,6 @@ class Repository @Inject constructor(
       launch {
         try {
           val config = db.enphaseConfigDao().get() ?: return@launch
-          enphase.ensureLogin(config.email, config.password)
           db.batteryDao().updateBatteryCapacity(enphase.getBatteryCapacity(config.mainSiteId))
         } catch (e: Exception) {
           if (e is CancellationException) {
@@ -133,6 +137,16 @@ class Repository @Inject constructor(
     } catch (e: Exception) {
       Timber.w(e, "Failed to write Reserve Config to server")
     }
+  }
+
+  suspend fun streamLiveStatus(delay: Duration = 1.seconds): Flow<LiveStatus> {
+    val settings = db.enphaseConfigDao().get() ?: throw IllegalStateException("Missing settings")
+    return enphase.streamLiveStatus(
+      settings.email,
+      settings.mainGateway,
+      settings.exportGateway,
+      delay
+    )
   }
 
   private suspend fun updateMainStats(enphaseConfig: EnphaseConfig, day: LocalDate) {
@@ -210,6 +224,10 @@ class Repository @Inject constructor(
       }
       MonthData(month, allDays)
     }
+  }
+
+  override fun close() {
+    enphase.close()
   }
 }
 
