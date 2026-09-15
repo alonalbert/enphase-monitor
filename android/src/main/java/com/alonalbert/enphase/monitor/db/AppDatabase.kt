@@ -1,10 +1,10 @@
 package com.alonalbert.enphase.monitor.db
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 
 @Database(
   entities = [
@@ -18,7 +18,7 @@ import androidx.room.TypeConverters
   version = 2,
   exportSchema = true,
 )
-@TypeConverters(LocalDateConverter::class)
+@ColumnTypeConverters(LocalDateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
   abstract fun batteryDao(): BatteryDao
   abstract fun dayDao(): DayDao

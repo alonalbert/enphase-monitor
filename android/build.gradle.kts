@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.androidx.room)
+  alias(libs.plugins.androidx.room3)
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.hilt)
@@ -10,7 +10,7 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
-room {
+room3 {
   schemaDirectory("$projectDir/schemas")
 }
 
@@ -72,8 +72,7 @@ dependencies {
   implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.androidx.lifecycle.process)
   implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.androidx.room.ktx)
+  implementation(libs.androidx.room3.runtime)
   implementation(libs.androidx.ui.graphics)
   implementation(libs.appcompat.v7)
   implementation(libs.gson)
@@ -93,7 +92,7 @@ dependencies {
 
   implementation(platform(libs.androidx.compose.bom))
 
-  ksp(libs.androidx.room.compiler)
+  ksp(libs.androidx.room3.compiler)
   ksp(libs.hilt.compiler)
   ksp(libs.androidx.hilt.compiler)
 
