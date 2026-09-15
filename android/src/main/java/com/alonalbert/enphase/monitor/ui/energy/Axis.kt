@@ -1,9 +1,8 @@
 package com.alonalbert.enphase.monitor.ui.energy
 
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
-import java.text.DecimalFormat
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 
-val DecimalValueFormatter = CartesianValueFormatter.decimal(DecimalFormat("#.#"))
+val DecimalValueFormatter = CartesianValueFormatter.decimal(1)
 
 fun timeOfDayAxisValueFormatter(pointsPerHour: Int) = CartesianValueFormatter { _, x, _ ->
   when (val h = x.toInt() / pointsPerHour) {

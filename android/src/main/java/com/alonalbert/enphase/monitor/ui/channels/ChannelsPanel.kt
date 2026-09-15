@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,26 +19,22 @@ import com.alonalbert.enphase.monitor.emporia.model.ChannelUsage
 import com.alonalbert.enphase.monitor.ui.energy.DecimalValueFormatter
 import com.alonalbert.enphase.monitor.ui.energy.timeOfDayAxisValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.Zoom
+import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
-import com.patrykandpatrick.vico.compose.cartesian.cartesianLayerPadding
-import com.patrykandpatrick.vico.compose.cartesian.layer.continuous
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerPadding
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer.LineFill
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer.LineStroke
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.Zoom
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianLayerRangeProvider
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer.LineFill
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer.LineStroke
+import com.patrykandpatrick.vico.compose.common.Fill
 import kotlinx.coroutines.runBlocking
 
 private const val CHUNK = 5
@@ -86,9 +83,9 @@ private fun ChannelsChart(
         rememberLineCartesianLayer(
           lineProvider = LineCartesianLayer.LineProvider.series(
             colors.map {
-              LineCartesianLayer.rememberLine(
-                fill = LineFill.single(fill(it)),
-                stroke = LineStroke.continuous(1.dp),
+              LineCartesianLayer.Line(
+                fill = LineFill.single(Fill(it)),
+                stroke = LineStroke.Continuous(1.dp),
               )
             }
           ),
@@ -102,7 +99,7 @@ private fun ChannelsChart(
           ),
         bottomAxis =
           HorizontalAxis.rememberBottom(
-            label = rememberAxisLabelComponent(textSize = 10.sp),
+            label = rememberAxisLabelComponent(style = TextStyle(fontSize = 10.sp)),
             valueFormatter = timeOfDayAxisValueFormatter(60 / CHUNK),
             guideline = null,
             itemPlacer = remember {
@@ -114,7 +111,7 @@ private fun ChannelsChart(
               )
             },
           ),
-        layerPadding = { cartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
+        layerPadding = { CartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
       ),
     modelProducer = modelProducer,
     zoomState = rememberVicoZoomState(initialZoom = Zoom.Content),
@@ -127,7 +124,7 @@ private suspend fun CartesianChartModelProducer.runTransaction(
   states: List<Boolean>,
 ) {
   runTransaction {
-    lineSeries {
+    lineModel {
       data.zip(states).forEach { (usage, state) ->
         val usages = when (state) {
           true -> usage.usage.prepare()

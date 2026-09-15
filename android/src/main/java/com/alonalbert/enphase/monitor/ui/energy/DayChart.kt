@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,30 +27,27 @@ import com.alonalbert.enphase.monitor.ui.theme.colorOf
 import com.alonalbert.enphase.monitor.util.appendEnergyValue
 import com.alonalbert.enphase.monitor.util.seriesOrEmpty
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
+import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
-import com.patrykandpatrick.vico.compose.cartesian.cartesianLayerPadding
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerPadding
+import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer.LineStroke
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.layer.stacked
+import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.marker.ColumnCartesianLayerMarkerTarget
+import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker.ValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
+import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.CartesianDrawingContext
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer.LineStroke
-import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarker
-import com.patrykandpatrick.vico.core.cartesian.marker.ColumnCartesianLayerMarkerTarget
-import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker.ValueFormatter
 import kotlinx.coroutines.runBlocking
 
 private val EMPTY = List(96) { 0.0 }
@@ -89,19 +87,19 @@ private fun DayChart(
         rememberColumnCartesianLayer(
           columnProvider =
             ColumnCartesianLayer.ColumnProvider.series(
-              rememberLineComponent(fill = fill(colorResource(R.color.solar)), thickness = 2.2.dp),
-              rememberLineComponent(fill = fill(colorResource(R.color.consumption)), thickness = 2.2.dp),
-              rememberLineComponent(fill = fill(colorResource(R.color.grid)), thickness = 2.2.dp),
-              rememberLineComponent(fill = fill(colorResource(R.color.battery)), thickness = 2.2.dp),
+              rememberLineComponent(fill = Fill(colorResource(R.color.solar)), thickness = 2.2.dp),
+              rememberLineComponent(fill = Fill(colorResource(R.color.consumption)), thickness = 2.2.dp),
+              rememberLineComponent(fill = Fill(colorResource(R.color.grid)), thickness = 2.2.dp),
+              rememberLineComponent(fill = Fill(colorResource(R.color.battery)), thickness = 2.2.dp),
             ),
           columnCollectionSpacing = 0.8.dp,
-          mergeMode = { ColumnCartesianLayer.MergeMode.stacked() },
+          mergeMode = { ColumnCartesianLayer.MergeMode.Stacked },
         ),
         rememberLineCartesianLayer(
           lineProvider = LineCartesianLayer.LineProvider.series(
             LineCartesianLayer.Line(
-              LineCartesianLayer.LineFill.single(fill(Color.Black.copy(alpha = .5f))),
-              LineStroke.Continuous(1.5f)
+              fill = LineCartesianLayer.LineFill.single(Fill(Color.Black.copy(alpha = .5f))),
+              stroke = LineStroke.Continuous(1.5.dp)
             )
           ),
           pointSpacing = 2.2.dp,
@@ -114,7 +112,7 @@ private fun DayChart(
           ),
         bottomAxis =
           HorizontalAxis.rememberBottom(
-            label = rememberAxisLabelComponent(textSize = 10.sp),
+            label = rememberAxisLabelComponent(style = TextStyle(fontSize = 10.sp)),
             valueFormatter = timeOfDayAxisValueFormatter(4),
             guideline = null,
             itemPlacer = remember {
@@ -127,7 +125,7 @@ private fun DayChart(
             },
           ),
         marker = rememberMarker(DayMarkerValueFormatter(LocalContext.current), lineCount = 5),
-        layerPadding = { cartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
+        layerPadding = { CartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
       ),
     modelProducer = modelProducer,
     zoomState = rememberVicoZoomState(zoomEnabled = false),
@@ -144,18 +142,18 @@ private suspend fun CartesianChartModelProducer.runTransaction(
   showGrid: Boolean,
 ) {
   runTransaction {
-    columnSeries {
+    columnModel {
       data.production.seriesOrEmpty(showProduction) { it * 4 }
       data.consumption.seriesOrEmpty(showConsumption) { -it * 4 }
       data.grid.seriesOrEmpty(showGrid) { it * 4 }
       data.storage.seriesOrEmpty(showStorage) { it * 4 }
     }
-    lineSeries {
+    lineModel {
       val values = when {
         !showProduction -> EMPTY
         productionSplit == EXPORT -> data.productionExport
         productionSplit == MAIN -> data.productionMain
-        else -> return@lineSeries
+        else -> return@lineModel
       }
       series(values.map { it * 4 })
     }

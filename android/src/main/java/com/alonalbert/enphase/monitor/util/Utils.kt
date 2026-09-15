@@ -21,7 +21,7 @@ import com.alonalbert.enphase.monitor.enphase.util.kw
 import com.alonalbert.enphase.monitor.enphase.util.round2
 import com.alonalbert.enphase.monitor.enphase.util.zerofy
 import com.alonalbert.enphase.monitor.ui.theme.toInt
-import com.patrykandpatrick.vico.core.cartesian.data.ColumnCartesianLayerModel
+import com.patrykandpatrick.vico.compose.cartesian.data.ColumnCartesianLayerModel
 
 fun Double.toDisplay(
   unit: String,
@@ -55,13 +55,11 @@ fun stringResourceOrDefault(@StringRes id: Int, default: String): String {
 
 context(scope: ColumnCartesianLayerModel.BuilderScope)
 fun <T> List<T>.seriesOrEmpty(show: Boolean, transform: (T) -> Double) {
-  with(scope) {
-    val values = when (show) {
-      true -> map(transform)
-      false -> List(size) { 0.0 }
-    }
-    series(values)
+  val values = when (show) {
+    true -> map(transform)
+    false -> List(this@seriesOrEmpty.size) { 0.0 }
   }
+  scope.series(values)
 }
 
 fun SpannableStringBuilder.appendEnergyValue(name: String, value: Double, color: Color) {

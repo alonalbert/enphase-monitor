@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,26 +31,24 @@ import com.alonalbert.enphase.monitor.ui.energy.timeOfDayAxisValueFormatter
 import com.alonalbert.enphase.monitor.ui.theme.colorOf
 import com.alonalbert.enphase.monitor.ui.theme.toInt
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
+import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
-import com.patrykandpatrick.vico.compose.cartesian.cartesianLayerPadding
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayerPadding
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer.LineStroke
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker.ValueFormatter
+import com.patrykandpatrick.vico.compose.cartesian.marker.LineCartesianLayerMarkerTarget
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.CartesianDrawingContext
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis.HorizontalLabelPosition.Inside
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianLayerRangeProvider
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer.LineStroke
-import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarker
-import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker.ValueFormatter
-import com.patrykandpatrick.vico.core.cartesian.marker.LineCartesianLayerMarkerTarget
+import com.patrykandpatrick.vico.compose.common.Fill
 import kotlinx.coroutines.runBlocking
 
 @Composable
@@ -82,7 +81,7 @@ private fun BatteryLevelChart(
   batteryCapacity: Double,
   modifier: Modifier = Modifier,
 ) {
-  val fill = fill(colorResource(R.color.battery_chart))
+  val fill = Fill(colorResource(R.color.battery_chart))
   CartesianChartHost(
     chart =
       rememberCartesianChart(
@@ -90,20 +89,15 @@ private fun BatteryLevelChart(
           lineProvider = LineCartesianLayer.LineProvider.series(
             LineCartesianLayer.Line(
               fill = LineCartesianLayer.LineFill.single(fill),
-              areaFill =
-                LineCartesianLayer.AreaFill.single(fill)
+              areaFill = LineCartesianLayer.AreaFill.single(fill)
             ),
             LineCartesianLayer.Line(
-              LineCartesianLayer.LineFill.single(fill(
-                colorResource(R.color.battery_reserve_start),
-                )),
-              LineStroke.Continuous(1.0f)
+              fill = LineCartesianLayer.LineFill.single(Fill(colorResource(R.color.battery_reserve_start))),
+              stroke = LineStroke.Continuous(1.dp)
             ),
             LineCartesianLayer.Line(
-              LineCartesianLayer.LineFill.single(fill(
-                colorResource(R.color.battery_reserve_end),
-                )),
-              LineStroke.Continuous(1.0f)
+              fill = LineCartesianLayer.LineFill.single(Fill(colorResource(R.color.battery_reserve_end))),
+              stroke = LineStroke.Continuous(1.dp)
             ),
           ),
           rangeProvider = remember {
@@ -124,7 +118,7 @@ private fun BatteryLevelChart(
           ),
         bottomAxis =
           HorizontalAxis.rememberBottom(
-            label = rememberAxisLabelComponent(textSize = 10.sp),
+            label = rememberAxisLabelComponent(style = TextStyle(fontSize = 10.sp)),
             valueFormatter = timeOfDayAxisValueFormatter(4),
             guideline = null,
             itemPlacer = remember {
@@ -137,7 +131,7 @@ private fun BatteryLevelChart(
             },
           ),
         marker = rememberMarker(BatteryMarkerValueFormatter(LocalContext.current, batteryCapacity), lineCount = 3),
-        layerPadding = { cartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
+        layerPadding = { CartesianLayerPadding(scalableStart = 0.dp, scalableEnd = 0.dp) },
       ),
     modelProducer = modelProducer,
     modifier = modifier,
@@ -150,7 +144,7 @@ private suspend fun CartesianChartModelProducer.runTransaction(
   reserves: List<Int>,
 ) {
   runTransaction {
-    lineSeries {
+    lineModel {
       if (batteryLevels.isNotEmpty()) {
         series(batteryLevels)
       }
