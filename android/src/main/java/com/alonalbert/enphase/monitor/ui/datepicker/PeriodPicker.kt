@@ -23,6 +23,7 @@ import java.time.YearMonth
 @Composable
 fun PeriodPicker(
   period: Period,
+  today: LocalDate,
   onPeriodChanged: (Period) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -34,17 +35,13 @@ fun PeriodPicker(
       PeriodButton(
         text = "Day",
         isSelected = period is DayPeriod,
-        onClick = { onPeriodChanged(DayPeriod(LocalDate.now())) }
+        onClick = { onPeriodChanged(DayPeriod(today)) }
       )
       PeriodButton(
         text = "Month",
         isSelected = period is MonthPeriod,
         onClick = { onPeriodChanged(MonthPeriod(YearMonth.now())) }
       )
-    }
-    when (period) {
-      is DayPeriod -> DayPicker(period.day, { onPeriodChanged(DayPeriod(it)) })
-      is MonthPeriod -> MonthPicker(period.month, { onPeriodChanged(MonthPeriod(it)) })
     }
   }
 }
@@ -77,11 +74,11 @@ fun PeriodButton(
 @Preview(name = "Today")
 @Composable
 private fun PeriodPickerPreview_Day() {
-  PeriodPicker(DayPeriod(LocalDate.now()), {})
+  PeriodPicker(DayPeriod(LocalDate.now()), LocalDate.now(), {})
 }
 
 @Preview(name = "Today")
 @Composable
 private fun PeriodPickerPreview_Month() {
-  PeriodPicker(MonthPeriod(YearMonth.now()), {})
+  PeriodPicker(MonthPeriod(YearMonth.now()), LocalDate.now(), {})
 }

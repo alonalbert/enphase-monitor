@@ -2,6 +2,8 @@
   <dictionary name="project">
     <words>
       <w>enphase</w>
+      <w>enphaseenergy</w>
+      <w>inapp</w>
       <w>sigv</w>
       <w>snackbar</w>
       <w>xsrf</w>

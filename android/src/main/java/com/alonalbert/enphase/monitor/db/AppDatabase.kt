@@ -1,10 +1,10 @@
 package com.alonalbert.enphase.monitor.db
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 
 @Database(
   entities = [
@@ -12,16 +12,19 @@ import androidx.room.TypeConverters
     Day::class,
     DayExportValues::class,
     DayValues::class,
+    Channel::class,
+    ChannelUsageValue::class,
   ],
-  version = 1,
+  version = 2,
   exportSchema = true,
 )
-@TypeConverters(LocalDateConverter::class)
+@ColumnTypeConverters(LocalDateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
   abstract fun batteryDao(): BatteryDao
   abstract fun dayDao(): DayDao
   abstract fun configDao(): KeyValueDao
-  abstract fun settingsDao(): SettingsDao
+  abstract fun enphaseConfigDao(): EnphaseConfigDao
+  abstract fun loginInfoDao(): LoginInfoDao
 
   companion object {
     fun getDatabase(context: Context, filename: String): AppDatabase {

@@ -1,0 +1,33 @@
+package com.alonalbert.enphase.monitor.db
+
+import androidx.room3.Dao
+import androidx.room3.Query
+import androidx.room3.Transaction
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
+
+@Dao
+interface LoginInfoDao: KeyValueDao {
+  @Query(
+    """
+    SELECT 
+      (SELECT value FROM KeyValue WHERE name='server') as server, 
+      (SELECT value FROM KeyValue WHERE name='username') as username, 
+      (SELECT value FROM KeyValue WHERE name='password') as password
+      WHERE TRUE 
+        AND server IS NOT NULL
+        AND username IS NOT NULL
+        AND password IS NOT NULL
+    """
+  )
+  fun flow(): Flow<LoginInfo?>
+
+  suspend fun get(): LoginInfo? = flow().firstOrNull()
+
+  @Transaction
+  suspend fun update(loginInfo: LoginInfo) {
+    upsert("server", loginInfo.server)
+    upsert("username", loginInfo.username)
+    upsert("password", loginInfo.password)
+  }
+}

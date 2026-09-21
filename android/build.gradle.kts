@@ -2,25 +2,26 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.androidx.room)
+  alias(libs.plugins.androidx.room3)
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.hilt)
   alias(libs.plugins.ksp)
+  alias(libs.plugins.kotlin.serialization)
 }
 
-room {
+room3 {
   schemaDirectory("$projectDir/schemas")
 }
 
 android {
   namespace = "com.alonalbert.enphase.monitor"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "com.alonalbert.enphase.monitor"
     minSdk = 36
-    targetSdk = 36
+    targetSdk = 37
     versionCode = 1
     versionName = "1.0"
 
@@ -51,6 +52,9 @@ android {
     resources {
       excludes += "/META-INF/NOTICE.md"
       excludes += "/META-INF/{AL2.0,LGPL2.1}"
+      excludes += "/META-INF/INDEX.LIST"
+      excludes += "/META-INF/DEPENDENCIES"
+      excludes += "/META-INF/io.netty.versions.properties"
     }
   }
 }
@@ -66,9 +70,9 @@ dependencies {
   implementation(libs.androidx.core.splashscreen)
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.hilt.navigation.compose)
+  implementation(libs.androidx.lifecycle.process)
   implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.androidx.room.ktx)
+  implementation(libs.androidx.room3.runtime)
   implementation(libs.androidx.ui.graphics)
   implementation(libs.appcompat.v7)
   implementation(libs.gson)
@@ -77,10 +81,18 @@ dependencies {
   implementation(libs.timber)
   implementation(libs.vico.compose)
   implementation(libs.vico.compose.m3)
+  // Ktor
+  implementation(libs.ktor.client.android)
+  implementation(libs.ktor.client.auth)
+  implementation(libs.ktor.client.core)
+  implementation(libs.ktor.client.logging)
+  implementation(libs.ktor.serialization.kotlinx.json)
+  implementation(libs.ktor.client.content.negotiation)
+
 
   implementation(platform(libs.androidx.compose.bom))
 
-  ksp(libs.androidx.room.compiler)
+  ksp(libs.androidx.room3.compiler)
   ksp(libs.hilt.compiler)
   ksp(libs.androidx.hilt.compiler)
 

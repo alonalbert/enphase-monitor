@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alonalbert.enphase.monitor.db.AppDatabase
 import com.alonalbert.enphase.monitor.db.ReserveConfig
+import com.alonalbert.enphase.monitor.emporia.model.ChannelUsage
 import com.alonalbert.enphase.monitor.enphase.model.BatteryState
 import com.alonalbert.enphase.monitor.repository.ChartData
 import com.alonalbert.enphase.monitor.repository.DayData
@@ -45,9 +46,14 @@ class EnergyViewModel @Inject constructor(
       repository.getChartDataFlow(it)
     }.stateIn(viewModelScope, DayData.empty(LocalDate.now()))
 
+  val channelDataFlow: StateFlow<List<ChannelUsage>> =
+    periodFlow.flatMapLatest {
+      repository.getChannelDataFlow(it)
+    }.stateIn(viewModelScope, emptyList())
+
   val batteryStateState: StateFlow<BatteryState> = repository.getBatteryStateFlow().stateIn(viewModelScope, BatteryState(soc = 0, reserve = 0))
   val reserveConfigState: StateFlow<ReserveConfig> =
-    db.batteryDao().getReserveConfigFlow().filterNotNull().stateIn(viewModelScope, ReserveConfig.DEFAULT)
+    repository.getReserveConfigFlow().filterNotNull().stateIn(viewModelScope, ReserveConfig.DEFAULT)
   val batteryCapacity: StateFlow<Double> =
     db.batteryDao().getBatteryCapacityFlow().filterNotNull().stateIn(viewModelScope, 0.0)
 
@@ -73,8 +79,7 @@ class EnergyViewModel @Inject constructor(
     job = viewModelScope.launch {
       withRefreshingState {
         try {
-          val period = periodFlow.value
-          when (period) {
+          when (val period = periodFlow.value) {
             is DayPeriod -> repository.updateStats(period.day)
             is MonthPeriod -> repository.updateStats(period.month)
           }
@@ -95,6 +100,8 @@ class EnergyViewModel @Inject constructor(
       refreshData()
     }
   }
+
+  fun today() = repository.today()
 
   private suspend fun withRefreshingState(block: suspend () -> Unit) {
     isRefreshingStateFlow.value = true

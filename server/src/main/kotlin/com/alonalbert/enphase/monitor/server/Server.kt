@@ -1,14 +1,13 @@
 package com.alonalbert.enphase.monitor.server
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import jakarta.annotation.PostConstruct
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.autoconfigure.domain.EntityScan
+import org.springframework.boot.persistence.autoconfigure.EntityScan
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.PropertySource
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MINUTES
 
 @SpringBootApplication
 @PropertySource("classpath:local.properties")
@@ -16,13 +15,19 @@ import java.util.concurrent.TimeUnit
 @EnableScheduling
 internal class Server(
   private val reserveManager: ReserveManager,
+  private val databaseSeeder: DatabaseSeeder,
 ) {
-  @Scheduled(timeUnit = TimeUnit.SECONDS, fixedRate = 10)
-  fun updateReserve() {
-    runBlocking(Dispatchers.Default) {
-      reserveManager.updateReserve()
-    }
+
+  @PostConstruct
+  fun seedDatabase() {
+    databaseSeeder.seedDatabase()
   }
+
+  @Scheduled(timeUnit = MINUTES, fixedRate = 5)
+  suspend fun updateReserve() {
+    reserveManager.updateReserve()
+  }
+
 }
 
 fun main(args: Array<String>) {

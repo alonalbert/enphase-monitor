@@ -2,6 +2,7 @@
 
 package com.alonalbert.enphase.reservemanager
 
+import com.alonalbert.enphase.monitor.enphase.Credentials
 import com.alonalbert.enphase.monitor.enphase.Enphase
 import com.alonalbert.enphase.monitor.enphase.ReserveCalculator
 import com.alonalbert.enphase.monitor.enphase.util.DefaultLogger
@@ -52,16 +53,15 @@ private fun setReserve(idleLoad: Double, batteryCapacity: Double, minReserve: In
       System.err.println("Warning: $propertiesPath does not exist")
       return@runBlocking
     }
+    val properties = Properties()
+    propertiesPath.inputStream().use {
+      properties.load(it)
+    }
+    val email = properties.getProperty("login.email") ?: throw IllegalStateException("Missing email")
+    val password = properties.getProperty("login.password") ?: throw IllegalStateException("Missing password")
     launch {
-      Enphase(logger).use { enphase ->
-        val properties = Properties()
-        propertiesPath.inputStream().use {
-          properties.load(it)
-        }
-        val email = properties.getProperty("login.email") ?: throw IllegalStateException("Missing email")
-        val password = properties.getProperty("login.password") ?: throw IllegalStateException("Missing password")
+      Enphase({ Credentials(email, password) }, logger).use { enphase ->
         val siteId = properties.getProperty("site.main") ?: throw IllegalStateException("Missing site id")
-        enphase.ensureLogin(email, password)
         val result = enphase.setBatteryReserve(siteId, reserve)
         logger.info("Setting reserve to $reserve: $result")
       }

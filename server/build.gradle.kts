@@ -23,7 +23,10 @@ dependencies {
   implementation(libs.spring.boot.starter.web)
   implementation(libs.sqlite)
   implementation(libs.sqlite.dialect)
+  implementation(libs.hivemq.mqtt.client)
   implementation(project(":shared"))
+
+  runtimeOnly(libs.kotlinx.coroutines.reactor)
 }
 
 java {
