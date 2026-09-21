@@ -37,9 +37,3 @@ java {
 springBoot {
   mainClass.set("com.alonalbert.enphase.monitor.server.ServerKt")
 }
-
-kotlin {
-  compilerOptions {
-    freeCompilerArgs.add("-Xcontext-parameters")
-  }
-}

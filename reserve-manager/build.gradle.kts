@@ -5,11 +5,6 @@ plugins {
   alias(libs.plugins.kotlin.jvm)
   application
 }
-kotlin {
-  compilerOptions {
-    freeCompilerArgs.add("-Xcontext-parameters")
-  }
-}
 
 dependencies {
   implementation(project(":shared"))
