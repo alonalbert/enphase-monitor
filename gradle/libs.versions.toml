@@ -1,15 +1,16 @@
 [versions]
 agp = "9.4.1"
 androidx-activity-compose = "1.13.0"
+androidx-appcompat = "1.8.0"
 androidx-compose-bom = "2026.09.00"
+androidx-espresso = "3.7.0"
 androidx-hilt = "1.4.0"
 androidx-lifecycle = "2.11.0"
 androidx-room3 = "3.0.3"
-appcompat-v7 = "28.0.0"
+androidx-test-runner = "1.7.0"
 amazon-aws = "2.54.18"
 core-splashscreen = "1.2.0"
 datastore = "1.2.1"
-espresso-core = "3.0.2"
 gson = "2.14.0"
 hilt = "2.60.1"
 hivemq-mqtt-client = "1.4.0"
@@ -22,7 +23,6 @@ kotlinx-datetime = "0.8.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.8"
 ktor = "3.5.2"
-runner = "1.0.2"
 slf4j = "2.0.19"
 spring-boot = "4.1.1"
 spring-dependency-management = "1.1.7"
@@ -32,6 +32,7 @@ vico = "3.3.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
@@ -46,13 +47,13 @@ androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", 
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "androidx-room3" }
 androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "androidx-room3" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-appcompat-v7 = { group = "com.android.support", name = "appcompat-v7", version.ref = "appcompat-v7" }
 amazon-aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "amazon-aws" }
 amazon-cognitoidentityprovider = { module = "software.amazon.awssdk:cognitoidentityprovider" }
-espresso-core = { group = "com.android.support.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
@@ -75,7 +76,6 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
-runner = { group = "com.android.support.test", name = "runner", version.ref = "runner" }
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
@@ -103,4 +103,3 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 
 [bundles]
-

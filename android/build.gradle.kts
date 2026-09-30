@@ -24,7 +24,7 @@ android {
     versionCode = 1
     versionName = "1.0"
 
-    testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   buildTypes {
@@ -72,7 +72,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.room3.runtime)
   implementation(libs.androidx.ui.graphics)
-  implementation(libs.appcompat.v7)
+  implementation(libs.androidx.appcompat)
   implementation(libs.gson)
   implementation(libs.hilt.android)
   implementation(libs.slf4j)
@@ -96,8 +96,8 @@ dependencies {
 
   testImplementation(libs.junit4)
 
-  androidTestImplementation(libs.runner)
-  androidTestImplementation(libs.espresso.core)
+  androidTestImplementation(libs.androidx.test.runner)
+  androidTestImplementation(libs.androidx.test.espresso.core)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.ui.test.junit4)
 
