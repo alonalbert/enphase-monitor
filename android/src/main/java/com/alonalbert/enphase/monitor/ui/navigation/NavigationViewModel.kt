@@ -25,7 +25,7 @@ class NavigationViewModel
 
   val loginState: StateFlow<LoginState> = db.loginInfoDao().flow().distinctUntilChanged().map {
     when {
-      it == null -> Loading
+      it == null -> LoggedOut
       it.isValid() -> repository.updateEnphaseConfig(it).let { LoggedIn }
       else -> LoggedOut
     }
